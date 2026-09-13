@@ -1,0 +1,72 @@
+// Camp Sync — Phase 1 schema
+// A "Trip" is a shared scheduling session (When2Meet-style). Anyone with the
+// trip's slug can join as a Participant and mark date ranges they CANNOT go.
+// The overlap engine (src/lib/overlap.ts) turns everyone's blocks into a
+// ranked list of windows where the whole group is free.
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Trip {
+  id            String         @id @default(cuid())
+  slug          String         @unique // short id used in the shareable URL
+  name          String
+  // The candidate date range the organizer wants to search within,
+  // e.g. "sometime between June 1 and Aug 31". Kept simple (dates only,
+  // no time-of-day) since camping trips are day-granular.
+  rangeStart    DateTime
+  rangeEnd      DateTime
+  createdAt     DateTime       @default(now())
+  participants  Participant[]
+
+  // The organizer's pinned choice from the recommendation results. Stored
+  // as a snapshot (name/url/etc at the moment of pinning) rather than just
+  // a facility ID — RIDB data can change or a facility can be delisted,
+  // and the trip shouldn't lose its decision if that happens. Nullable
+  // fields together = "nothing pinned yet"; there is no separate flag.
+  pinnedFacilityId     String?
+  pinnedName           String?
+  pinnedBookingUrl     String?
+  pinnedDistanceMiles  Float?
+  pinnedWindowStart    DateTime?
+  pinnedWindowEnd      DateTime?
+  pinnedAt             DateTime?
+}
+
+model Participant {
+  id                 String              @id @default(cuid())
+  trip               Trip                @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId             String
+  name               String
+  // What kind of camping this person is up for. Used to narrow the Phase 2
+  // recommendation search — see src/lib/campingStyle.ts for how the
+  // group's individual preferences get resolved into one search filter.
+  campingStyle       CampingStyle        @default(EITHER)
+  createdAt          DateTime            @default(now())
+  unavailableRanges  UnavailableRange[]
+
+  @@index([tripId])
+}
+
+enum CampingStyle {
+  CAR
+  BACKPACK
+  EITHER
+}
+
+model UnavailableRange {
+  id             String       @id @default(cuid())
+  participant    Participant  @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  participantId  String
+  // Inclusive start/end day. Stored as dates at midnight UTC.
+  startDate      DateTime
+  endDate        DateTime
+
+  @@index([participantId])
+}
