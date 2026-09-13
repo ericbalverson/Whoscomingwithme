@@ -61,7 +61,7 @@ ranked list of campgrounds for the group's best window.
 |---|---|---|
 | RIDB (`ridb.recreation.gov`) | Campground/facility metadata — name, description, location, reservable flag | Yes, documented |
 | NPS API (`developer.nps.gov`) | State-level alerts (closures, fire bans) shown alongside results | Yes, documented |
-| Hiking Project (`hikingproject.com/data`) | Nearby trail name/distance/difficulty/rating — the AllTrails substitute, since AllTrails has no public API | Yes, documented |
+| OpenStreetMap Overpass API | Nearby trail names, lengths, and rough difficulty (from OSM's `sac_scale` tag when present) — the closest free, keyless substitute for AllTrails. No popularity/quality ratings exist in any free source. | Yes, community-run, no key |
 | recreation.gov's internal availability endpoint | Live per-night site availability | **No — unofficial and undocumented** |
 | OpenStreetMap Nominatim | Turns a typed place name into lat/lon + state | Yes, free, keyless |
 
@@ -85,10 +85,10 @@ plain constants at the top of the scoring function.
 
 ### Environment variables
 
-See `.env.example` — you'll need free keys for NPS, RIDB, and Hiking
-Project. Geocoding and the availability lookup need no key, but do set a
-real contact string in the `User-Agent` header in `geocode.ts` per
-Nominatim's usage policy before this goes to production traffic.
+See `.env.example` — you'll need free keys for NPS and RIDB. Geocoding,
+trail data, and the availability lookup need no key, but do set a real
+contact string in the `User-Agent` header in `geocode.ts` per Nominatim's
+usage policy before this goes to production traffic.
 
 ## What's next (Phase 3+ ideas)
 

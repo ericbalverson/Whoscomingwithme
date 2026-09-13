@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { GroupCampingStyleResolution } from "@/lib/campingStyle";
 
-type Trail = { id: number; name: string; difficulty: string; stars: number; distanceMiles: number; url: string };
+type Trail = { id: string; name: string; difficulty: string; distanceMiles: number; url: string };
 
 type Campground = {
   facilityId: string;
@@ -130,6 +130,8 @@ export function RecommendationsPanel({
         <p className="mt-1 text-sm text-sage">
           Searches near a place for the group&apos;s best window. Live availability comes from an
           unofficial source and can be wrong — always confirm on the booking link before you commit.
+          Trail data is from OpenStreetMap, so it has real names and lengths but no popularity or
+          quality ratings.
         </p>
       </div>
 
@@ -280,7 +282,7 @@ export function RecommendationsPanel({
                             {t.name}
                           </a>{" "}
                           <span className="font-mono text-[11px] text-sage">
-                            {t.difficulty} · {t.stars.toFixed(1)}★ · {t.distanceMiles.toFixed(1)}mi
+                            {t.difficulty} · {t.distanceMiles.toFixed(1)}mi long
                           </span>
                         </li>
                       ))}

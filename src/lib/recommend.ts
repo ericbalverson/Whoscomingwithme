@@ -1,6 +1,6 @@
 import { milesBetween } from "@/lib/geo";
 import { searchCampgrounds, guessCampingStyle, type RidbFacility, type CampingStyleGuess } from "@/lib/providers/ridb";
-import { getNearbyTrails, type Trail } from "@/lib/providers/hikingProject";
+import { getNearbyTrails, type Trail } from "@/lib/providers/osmTrails";
 import { summarizeWindowAvailability } from "@/lib/providers/recreationAvailability";
 import { getStateAlerts, type NpsAlert } from "@/lib/providers/nps";
 
@@ -65,7 +65,7 @@ export async function getRecommendations(opts: {
 
   const trails: Trail[] = trailsResult.status === "fulfilled" ? trailsResult.value : [];
   if (trailsResult.status === "rejected") {
-    sourceNotes.push(`Trail data (Hiking Project) unavailable: ${trailsResult.reason}`);
+    sourceNotes.push(`Trail data (OpenStreetMap) unavailable: ${trailsResult.reason}`);
   }
 
   const stateAlerts: NpsAlert[] = alertsResult.status === "fulfilled" ? alertsResult.value : [];
@@ -107,7 +107,9 @@ export async function getRecommendations(opts: {
       const nearbyTrails = trails
         .map((t) => ({ trail: t, distance: milesBetween(c.latitude, c.longitude, t.latitude, t.longitude) }))
         .filter((t) => t.distance <= TRAIL_SEARCH_RADIUS_MILES)
-        .sort((a, b) => b.trail.stars - a.trail.stars || a.distance - b.distance);
+        // No rating signal from OSM (unlike the old plan), so rank by
+        // trail length as a rough proxy for "worth hiking," then distance.
+        .sort((a, b) => b.trail.distanceMiles - a.trail.distanceMiles || a.distance - b.distance);
 
       const avg = availabilityByFacility.get(c.facilityId);
       const availability: CampgroundRecommendation["availability"] = avg
@@ -118,7 +120,10 @@ export async function getRecommendations(opts: {
 
       const campingStyle = styleByFacility.get(c.facilityId) ?? "UNKNOWN";
 
-      const trailScore = nearbyTrails.slice(0, 5).reduce((sum, t) => sum + t.trail.stars, 0);
+      // No star ratings available (see osmTrails.ts) — score by how many
+      // trails are nearby, capped so one campground with 40 short paths
+      // doesn't dwarf one with 3 genuinely good ones.
+      const trailScore = Math.min(nearbyTrails.length, 8) * 1.5;
       const availabilityScore =
         availability.status === "ok" && availability.totalDays > 0
           ? (availability.daysWithAvailability / availability.totalDays) * 10
