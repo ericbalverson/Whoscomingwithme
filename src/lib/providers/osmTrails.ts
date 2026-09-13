@@ -19,6 +19,11 @@
 
 const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter";
 const EARTH_RADIUS_MILES = 3958.8;
+// overpass-api.de returns 406 Not Acceptable to requests with no descriptive
+// User-Agent (or the default Node/fetch one) — this isn't optional courtesy
+// like Nominatim's, it's an active block. See:
+// https://community.openstreetmap.org/t/overpass-api-error-406/
+const USER_AGENT = "camp-sync/0.1 (hobby project; contact: set-your-email-here)";
 
 export type Trail = {
   id: string; // OSM way ID as a string, since IDs can exceed safe integer range on old ways
@@ -87,7 +92,11 @@ export async function getNearbyTrails(opts: {
   try {
     res = await fetch(OVERPASS_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": USER_AGENT,
+        Accept: "application/json",
+      },
       body: `data=${encodeURIComponent(query)}`,
       signal: AbortSignal.timeout(20000),
     });
