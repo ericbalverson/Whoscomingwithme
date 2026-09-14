@@ -103,14 +103,14 @@ export function AvailabilityGrid({
                   }
                   className={`aspect-square border border-slate font-mono text-xs transition-colors ${
                     isBlocked
-                      ? "bg-rust text-paper"
+                      ? "bg-rust text-ink"
                       : heat > 0
                         ? "text-paper"
                         : "bg-slate/40 text-paper hover:bg-slate"
                   }`}
                   style={
                     !isBlocked && heat > 0
-                      ? { backgroundColor: `rgba(159, 214, 210, ${0.15 + heat * 0.5})` }
+                      ? { backgroundColor: `rgba(63, 90, 71, ${0.1 + heat * 0.35})` }
                       : undefined
                   }
                 >

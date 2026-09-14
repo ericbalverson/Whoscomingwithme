@@ -8,10 +8,14 @@ const nanoid = customAlphabet("23456789abcdefghjkmnpqrstuvwxyz", 8);
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { name, rangeStart, rangeEnd } = body as {
+  const { name, rangeStart, rangeEnd, organizerName } = body as {
     name?: string;
     rangeStart?: string;
     rangeEnd?: string;
+    // Optional: if given, the organizer is immediately added as the first
+    // participant, so they don't have to re-type their name on the trip
+    // page they're about to land on.
+    organizerName?: string;
   };
 
   if (!name || !rangeStart || !rangeEnd) {
@@ -33,8 +37,14 @@ export async function POST(req: Request) {
       name,
       rangeStart: start,
       rangeEnd: end,
+      ...(organizerName?.trim()
+        ? { participants: { create: { name: organizerName.trim() } } }
+        : {}),
     },
+    include: { participants: true },
   });
 
-  return NextResponse.json({ trip }, { status: 201 });
+  const organizerId = trip.participants[0]?.id ?? null;
+
+  return NextResponse.json({ trip, organizerId }, { status: 201 });
 }

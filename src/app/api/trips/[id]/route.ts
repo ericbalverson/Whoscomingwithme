@@ -29,3 +29,19 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
   return NextResponse.json({ trip, windows });
 }
+
+// No separate "organizer" role exists — same trust model as pinning: anyone
+// with the trip link can delete it. Fine for a family/friend group; worth
+// adding real auth before this could matter for a multi-tenant product.
+export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+  const trip = await prisma.trip.findUnique({ where: { slug: params.id } });
+  if (!trip) {
+    return NextResponse.json({ error: "trip not found" }, { status: 404 });
+  }
+
+  // Cascade deletes on Participant and UnavailableRange (set in
+  // schema.prisma) handle cleaning up everything attached to this trip.
+  await prisma.trip.delete({ where: { id: trip.id } });
+
+  return NextResponse.json({ ok: true });
+}

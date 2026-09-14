@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AvailabilityGrid } from "@/components/AvailabilityGrid";
 import { RecommendationsPanel } from "@/components/RecommendationsPanel";
 import { resolveGroupCampingStyle, type CampingStyle } from "@/lib/campingStyle";
+import { rememberTrip, forgetTrip } from "@/lib/myTrips";
 
 type Trip = {
   id: string;
@@ -77,6 +79,7 @@ function daySetToRanges(days: Set<number>): { startDate: string; endDate: string
 }
 
 export default function TripPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [windows, setWindows] = useState<CandidateWindow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,6 +89,7 @@ export default function TripPage({ params }: { params: { id: string } }) {
   const [blocked, setBlocked] = useState<Set<number>>(new Set());
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const storageKey = `camp-sync:${params.id}:participantId`;
 
@@ -99,6 +103,12 @@ export default function TripPage({ params }: { params: { id: string } }) {
     setTrip(data.trip);
     setWindows(data.windows);
     setLoading(false);
+    rememberTrip({
+      slug: data.trip.slug,
+      name: data.trip.name,
+      rangeStart: data.trip.rangeStart,
+      rangeEnd: data.trip.rangeEnd,
+    });
     return data.trip as Trip;
   }
 
@@ -171,6 +181,18 @@ export default function TripPage({ params }: { params: { id: string } }) {
     await load();
   }
 
+  async function handleDeleteTrip() {
+    if (!trip) return;
+    const confirmed = window.confirm(
+      `Delete "${trip.name}" for everyone? This removes all availability that's been entered and can't be undone.`
+    );
+    if (!confirmed) return;
+    setDeleting(true);
+    await fetch(`/api/trips/${params.id}`, { method: "DELETE" });
+    forgetTrip(params.id);
+    router.push("/");
+  }
+
   if (loading) {
     return <main className="p-8 text-sage">Loading…</main>;
   }
@@ -189,7 +211,7 @@ export default function TripPage({ params }: { params: { id: string } }) {
     <main className="mx-auto flex max-w-2xl flex-col gap-10 px-6 py-12">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-xs uppercase tracking-wide text-sage">Camp Sync</p>
+          <p className="font-mono text-xs uppercase tracking-wide text-sage">Campfire Calendar</p>
           <h1 className="mt-1 font-display text-3xl font-medium text-paper">{trip.name}</h1>
           <p className="mt-1 text-sm text-sage">
             Searching {fmt(trip.rangeStart)} – {fmt(trip.rangeEnd)} · {trip.participants.length}{" "}
@@ -341,6 +363,16 @@ export default function TripPage({ params }: { params: { id: string } }) {
           await load();
         }}
       />
+
+      <footer className="border-t border-slate pt-6">
+        <button
+          onClick={handleDeleteTrip}
+          disabled={deleting}
+          className="font-mono text-xs text-sage underline decoration-dotted hover:text-rust disabled:opacity-50"
+        >
+          {deleting ? "Deleting…" : "Delete this trip"}
+        </button>
+      </footer>
     </main>
   );
 }

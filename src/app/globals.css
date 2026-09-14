@@ -3,17 +3,17 @@
 @tailwind utilities;
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
-  background-color: #14201c;
-  color: #ede6d6;
+  background-color: #f3ecda;
+  color: #241f16;
 }
 
 ::selection {
-  background-color: #e2984b;
-  color: #14201c;
+  background-color: #c1502e;
+  color: #f3ecda;
 }
 
 /* Respect reduced-motion preferences globally. */

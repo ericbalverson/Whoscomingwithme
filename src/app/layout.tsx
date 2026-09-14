@@ -22,7 +22,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Camp Sync",
+  title: "Campfire Calendar",
   description: "Find the dates your whole group can actually go camping.",
 };
 

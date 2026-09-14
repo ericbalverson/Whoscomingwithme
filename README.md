@@ -43,11 +43,20 @@ reuse from a future API-only recommendation service.
 2. In Vercel, "Add New Project" → import the repo.
 3. Add Postgres: Storage tab → Create Database (Neon is the default) →
    Connect to the project. This sets `DATABASE_URL` automatically.
-4. Add a Vercel "Build Command" override if needed — the `build` script
-   already runs `prisma generate` first, so the default should work.
-5. After the first deploy, run `npx prisma db push` once against the
-   production `DATABASE_URL` (locally, with `.env` pointed at prod, or via
-   `vercel env pull`) to create the tables.
+4. That's it — the `build` script runs `prisma generate && prisma db push`
+   before `next build`, so every deploy syncs the live database schema to
+   match `prisma/schema.prisma` automatically. No separate manual step,
+   and no need to pull secret-typed env vars down locally just to run a
+   one-off command.
+
+`prisma db push` (rather than proper migrations) is the right tool for a
+project at this stage, but the `--accept-data-loss` flag it needs to run
+non-interactively during a build is worth understanding: if a future
+schema change would drop a column or table that has real data in it,
+this will do that silently on deploy rather than asking for
+confirmation. Fine for now with no real users yet — worth switching to
+`prisma migrate deploy` with proper migration files before this holds
+data anyone would miss.
 
 ## Phase 2 — campground recommendations
 

@@ -17,13 +17,24 @@
  * providers (fail soft, don't take down the whole recommendation).
  */
 
-const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter";
+const OVERPASS_ENDPOINTS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+];
 const EARTH_RADIUS_MILES = 3958.8;
 // overpass-api.de returns 406 Not Acceptable to requests with no descriptive
 // User-Agent (or the default Node/fetch one) — this isn't optional courtesy
 // like Nominatim's, it's an active block. See:
 // https://community.openstreetmap.org/t/overpass-api-error-406/
 const USER_AGENT = "camp-sync/0.1 (hobby project; contact: set-your-email-here)";
+// The shared public Overpass servers will 504 on a wide-radius "return full
+// geometry for every named path/footway/track" query — that's genuinely a
+// lot of data to compute for, say, a 100-mile radius. Trails only ever
+// matter within 15mi of a specific campground (see TRAIL_SEARCH_RADIUS_MILES
+// in recommend.ts), so there's no benefit to querying wider than that plus
+// some margin, regardless of how big a campground search radius the person
+// picked.
+const MAX_OVERPASS_RADIUS_MILES = 20;
 
 export type Trail = {
   id: string; // OSM way ID as a string, since IDs can exceed safe integer range on old ways
@@ -75,7 +86,8 @@ export async function getNearbyTrails(opts: {
   maxDistanceMiles?: number;
   maxResults?: number;
 }): Promise<Trail[]> {
-  const radiusMeters = Math.round((opts.maxDistanceMiles ?? 25) * 1609.34);
+  const cappedMiles = Math.min(opts.maxDistanceMiles ?? 25, MAX_OVERPASS_RADIUS_MILES);
+  const radiusMeters = Math.round(cappedMiles * 1609.34);
 
   // Named hiking-relevant ways within the radius: footpaths, tracks, and
   // paths explicitly tagged for foot traffic. Overpass QL, JSON output,
@@ -88,24 +100,35 @@ export async function getNearbyTrails(opts: {
     out geom;
   `.trim();
 
-  let res: Response;
-  try {
-    res = await fetch(OVERPASS_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": USER_AGENT,
-        Accept: "application/json",
-      },
-      body: `data=${encodeURIComponent(query)}`,
-      signal: AbortSignal.timeout(20000),
-    });
-  } catch {
-    throw new Error("network error contacting Overpass API");
+  let res: Response | null = null;
+  let lastError: string = "unknown error";
+  // Public Overpass instances are shared and occasionally overloaded (502/
+  // 504) independent of query size — trying a second mirror before giving
+  // up is standard practice for this API, not a sign of a broken query.
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    try {
+      const attempt = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": USER_AGENT,
+          Accept: "application/json",
+        },
+        body: `data=${encodeURIComponent(query)}`,
+        signal: AbortSignal.timeout(20000),
+      });
+      if (attempt.ok) {
+        res = attempt;
+        break;
+      }
+      lastError = `${endpoint} returned ${attempt.status}`;
+    } catch (err) {
+      lastError = `network error contacting ${endpoint}`;
+    }
   }
 
-  if (!res.ok) {
-    throw new Error(`Overpass request failed: ${res.status}`);
+  if (!res) {
+    throw new Error(`Overpass request failed: ${lastError}`);
   }
 
   const body = (await res.json()) as { elements: OverpassElement[] };
