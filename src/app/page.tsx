@@ -12,53 +12,6 @@ function fmtShort(dateStr: string) {
   });
 }
 
-/**
- * Hand-coded SVG evoking a sunset mountain-camp scene — inspired by the
- * layout/palette of a reference mockup, not a reproduction of any specific
- * illustration (that would be someone else's copyrighted artwork). Layered
- * silhouettes + a sun + a tree row, built entirely from the theme's own
- * color tokens so it stays in sync if the palette ever changes.
- */
-function HeroIllustration() {
-  return (
-    <svg
-      viewBox="0 0 1200 500"
-      preserveAspectRatio="xMidYMax slice"
-      className="absolute inset-0 h-full w-full"
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#2F4536" />
-          <stop offset="55%" stopColor="#8B3A22" />
-          <stop offset="100%" stopColor="#C1502E" />
-        </linearGradient>
-        <radialGradient id="sun" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#FBF3E4" />
-          <stop offset="100%" stopColor="#F3ECDA" stopOpacity="0.2" />
-        </radialGradient>
-      </defs>
-
-      <rect width="1200" height="500" fill="url(#sky)" />
-      <circle cx="920" cy="180" r="130" fill="url(#sun)" />
-
-      <polygon points="0,320 180,190 340,300 520,160 700,290 900,200 1050,300 1200,240 1200,500 0,500" fill="#2F4536" opacity="0.55" />
-      <polygon points="0,380 220,250 400,350 600,230 820,360 1000,270 1200,340 1200,500 0,500" fill="#2F4536" opacity="0.8" />
-      <polygon points="0,430 150,370 300,420 460,350 640,430 820,360 1000,420 1200,380 1200,500 0,500" fill="#241F16" />
-
-      {[60, 140, 230, 980, 1060, 1140].map((x, i) => (
-        <polygon
-          key={i}
-          points={`${x},500 ${x - 22},440 ${x - 8},440 ${x - 26},400 ${x - 10},400 ${x - 30},360 ${x + 30},360 ${x + 10},400 ${x + 26},400 ${x + 8},440 ${x + 22},440`}
-          fill="#241F16"
-        />
-      ))}
-
-      <rect x="0" y="460" width="1200" height="40" fill="#8B3A22" opacity="0.25" />
-    </svg>
-  );
-}
-
 export default function HomePage() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -127,7 +80,15 @@ export default function HomePage() {
       </nav>
 
       <section className="relative flex min-h-[420px] items-center overflow-hidden">
-        <HeroIllustration />
+        <img
+          src="/hero-camp.webp"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        {/* Dark gradient so the light headline text stays readable over a
+            busy photo/illustration — strongest on the left where the text
+            sits, fading out toward the right side of the image. */}
+        <div className="absolute inset-0 bg-gradient-to-r from-forest/85 via-forest/45 to-transparent" />
         <div className="relative z-10 mx-auto max-w-3xl px-6 py-20">
           <p className="font-mono text-xs uppercase tracking-wide text-cream/80">Group trip planning</p>
           <h1 className="mt-3 font-display text-4xl font-medium leading-tight text-cream sm:text-5xl">
