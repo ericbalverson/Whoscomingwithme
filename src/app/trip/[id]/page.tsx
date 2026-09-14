@@ -199,33 +199,47 @@ export default function TripPage({ params }: { params: { id: string } }) {
 
   if (!trip) {
     return (
-      <main className="mx-auto max-w-md p-8">
-        <p className="font-mono text-sm text-rust">
-          No trip found at this link. Check the URL, or start a new one.
-        </p>
+      <main className="flex flex-col">
+        <section className="relative flex min-h-[160px] items-center overflow-hidden">
+          <img src="/hero-camp.webp" alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-forest/80" />
+          <p className="relative z-10 mx-auto font-mono text-xs uppercase tracking-wide text-cream/80">
+            Campfire Calendar
+          </p>
+        </section>
+        <div className="mx-auto max-w-md p-8">
+          <p className="font-mono text-sm text-rust">
+            No trip found at this link. Check the URL, or start a new one.
+          </p>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-10 px-6 py-12">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <p className="font-mono text-xs uppercase tracking-wide text-sage">Campfire Calendar</p>
-          <h1 className="mt-1 font-display text-3xl font-medium text-paper">{trip.name}</h1>
-          <p className="mt-1 text-sm text-sage">
-            Searching {fmt(trip.rangeStart)} – {fmt(trip.rangeEnd)} · {trip.participants.length}{" "}
-            {trip.participants.length === 1 ? "person" : "people"} in
-          </p>
+    <main className="flex flex-col">
+      <section className="relative flex min-h-[220px] items-end overflow-hidden">
+        <img src="/hero-camp.webp" alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-forest/90 via-forest/50 to-transparent" />
+        <div className="relative z-10 flex w-full items-end justify-between gap-4 px-6 py-6">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-wide text-cream/80">Campfire Calendar</p>
+            <h1 className="mt-1 font-display text-3xl font-medium text-cream">{trip.name}</h1>
+            <p className="mt-1 text-sm text-cream/80">
+              Searching {fmt(trip.rangeStart)} – {fmt(trip.rangeEnd)} · {trip.participants.length}{" "}
+              {trip.participants.length === 1 ? "person" : "people"} in
+            </p>
+          </div>
+          <button
+            onClick={handleCopyLink}
+            className="shrink-0 border border-cream/40 px-3 py-2 font-mono text-xs text-cream hover:border-ember"
+          >
+            {copied ? "Copied" : "Copy link"}
+          </button>
         </div>
-        <button
-          onClick={handleCopyLink}
-          className="shrink-0 border border-slate px-3 py-2 font-mono text-xs text-paper hover:border-ember"
-        >
-          {copied ? "Copied" : "Copy link"}
-        </button>
-      </header>
+      </section>
 
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-10 px-6 py-12">
       {trip.pinnedName && (
         <section className="border border-ember/60 bg-ember/10 p-4">
           <p className="font-mono text-xs uppercase tracking-wide text-ember">Pinned campground</p>
@@ -373,6 +387,7 @@ export default function TripPage({ params }: { params: { id: string } }) {
           {deleting ? "Deleting…" : "Delete this trip"}
         </button>
       </footer>
+      </div>
     </main>
   );
 }
